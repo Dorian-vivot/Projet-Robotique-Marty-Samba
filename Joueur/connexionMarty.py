@@ -1,9 +1,9 @@
 import martypy
  
-IP = "127.0.0.1"  # à remplacer par la bonne ip
+IP = "192.168.0.105"  # à remplacer par la bonne ip
  
 def connecter():
-    marty = martypy.Marty(f"wifi/{IP}")
+    marty = martypy.Marty("wifi", "192.168.0.105")
     print("Connecté !")
     return marty
  
