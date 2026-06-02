@@ -7,8 +7,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Marty - Joueur")
         self.setMinimumSize(1000, 800)
-        tabs = QTabWidget()
-        tabs.addTab(ControlWidget(), "Menu - Contrôle")
-        tabs.addTab(DanceWidget(), "Menu - Dance")
-        self.setCentralWidget(tabs)
+        self.tabs = QTabWidget()
+        self.tabs.addTab(ControlWidget(), "Menu - Contrôle")
+        self.tabs.addTab(DanceWidget(), "Menu - Dance")
+        self.setCentralWidget(self.tabs)
        
