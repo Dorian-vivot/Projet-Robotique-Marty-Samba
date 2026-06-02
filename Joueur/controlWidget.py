@@ -9,6 +9,8 @@ class ControlWidget(QWidget):
         self._connection = MartyConnection()
         self._connection.connected.connect(self._onConnected)
         self._connection.disconnected.connect(self._onDisconnected)
+        self._connection.connection_lost.connect(self._onConnectionLost)
+        self._connection.battery_update.connect(self._updateBatteryLevel)
         self._build_ui()
 
     def _build_ui(self):
@@ -148,6 +150,12 @@ class ControlWidget(QWidget):
 
     def _onConnected(self):
         self._setStatusWidgets(True)
+
+    def _onConnectionLost(self):
+        self._setStatusWidgets(False)
+    
+    def _updateBatteryLevel(self, batteryLevel : int):
+        self.battery_bar.setValue(batteryLevel)
         
     def _setStatusWidgets(self, isConnected : bool):
         if isConnected:
