@@ -1,13 +1,11 @@
 from PyQt6.QtCore import QThread, pyqtSignal
 
-from martyConnection import MartyConnection
-
 class WatchDog(QThread):
     
     connection_lost = pyqtSignal()
     battery_update = pyqtSignal(int)
 
-    def __init__(self, connection : MartyConnection):
+    def __init__(self, connection):
         super().__init__()
         self._connection = connection
         self._is_running = False
