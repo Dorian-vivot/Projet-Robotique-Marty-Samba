@@ -54,6 +54,11 @@ def score():
     return jsonify(robots[rid]['score'])
 
 
+@app.route('/robots', methods=['GET'])
+def liste_robots():
+    return jsonify(robots)
+
+
 @app.route('/bye', methods=['POST'])
 def bye():
     data = request.get_json()
