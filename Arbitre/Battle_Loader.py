@@ -1,4 +1,5 @@
 
+from pathlib import Path
 import re
 
 
@@ -31,9 +32,18 @@ class BattleLoader:
  
     def __init__(self):
         self.max_steps: int = 10
-        self._rules_by_color: dict = {}
+        self.rules_by_color: dict = {}
         self.loaded: bool = False
-        self._file_path: str = ""
+        self.file_path: str = ""
+
+
+    def load_path(self, path : str):
+
+        contenu = Path(path).read_text()
+        self.parse(contenu)
+        self.file_path = path
+        self.loaded = True
+        
 
     @staticmethod
     def _parse_rule(line: str):
@@ -85,7 +95,7 @@ class BattleLoader:
  
     def parse(self, content: str) -> None:
         self.max_steps = 10
-        self._rules_by_color = {}
+        self.rules_by_color = {}
         current_color: str | None = None
  
         for raw_line in content.splitlines():
@@ -103,14 +113,14 @@ class BattleLoader:
             color_match = re.fullmatch(r"\[([A-Z])\]", line)
             if color_match:
                 current_color = color_match.group(1)
-                if current_color not in self._rules_by_color:
-                    self._rules_by_color[current_color] = []
+                if current_color not in self.rules_by_color:
+                    self.rules_by_color[current_color] = []
                 continue
 
             if "=" in line and current_color is not None:
                 rule = self._parse_rule(line)
                 if rule:
-                    self._rules_by_color[current_color].append(rule)
+                    self.rules_by_color[current_color].append(rule)
 
     def build_move_elements(self, arms: str, expression: str) -> set[str]: 
 
@@ -132,13 +142,13 @@ class BattleLoader:
         if not self.loaded:
             return 0
         color=(color or "").strip().upper()
-        if color not in self._rules_by_color():
+        if color not in self.rules_by_color():
             return 0
         
         move_elements = self.build_move_elements(arms, expression) 
 
         total_points = 0
-        for rule in self._rules_by_color[color]:
+        for rule in self.rules_by_color[color]:
             if rule.matches(move_elements):
                 total_points += rule.points
 
