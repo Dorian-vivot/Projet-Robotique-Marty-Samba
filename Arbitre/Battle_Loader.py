@@ -112,3 +112,27 @@ class BattleLoader:
                 if rule:
                     self._rules_by_color[current_color].append(rule)
         
+    def score(self, color: str, arms: str, expression: str):
+        if not self.loaded:
+            return 0
+        color=(color or "").strip().upper()
+        if color not in self._rules_by_color():
+            return 0
+        
+        move_elements = set[str] = set()
+
+        for element in (arms or "").split("+"):
+            mouvement = element.strip().upper()
+            if mouvement:
+                move_elements.add(mouvement)
+
+        expression_element = (expression or "").strip().upper()
+        if expression_element:
+            move_elements.add(expression_element)
+
+        total_points = 0
+        for rule in self._rules_by_color[color]:
+            if rule.maches(move_elements):
+                total_points += rule.points
+
+            return total_points
