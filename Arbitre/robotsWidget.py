@@ -1,6 +1,7 @@
 import requests
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox,
                               QLabel, QTableWidget, QTableWidgetItem, QPushButton)
+from PyQt6.QtCore import QTimer
 
 BASE = 'http://localhost:8000'
 
@@ -9,6 +10,11 @@ class RobotsWidget(QWidget):
     def __init__(self):
         super().__init__()
         self._build_ui()
+        self.refresh_btn.clicked.connect(self._rafraichir)
+        self._timer = QTimer()
+        self._timer.timeout.connect(self._rafraichir)
+        self._timer.start(2000)
+        self._rafraichir()
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
@@ -40,3 +46,19 @@ class RobotsWidget(QWidget):
 
         layout.addWidget(statut_group)
         layout.addWidget(robots_group)
+
+    def _rafraichir(self):
+        try:
+            r = requests.get(f'{BASE}/robots', timeout=1)
+            donnees = r.json()
+            self.statut_label.setText("Actif")
+            self.statut_label.setStyleSheet("color: green")
+            self.tableau.setRowCount(len(donnees))
+            for i, (robot_id, infos) in enumerate(donnees.items()):
+                self.tableau.setItem(i, 0, QTableWidgetItem(robot_id))
+                self.tableau.setItem(i, 1, QTableWidgetItem(str(infos['score'])))
+                self.tableau.setItem(i, 2, QTableWidgetItem(str(infos['nombre_pas'])))
+        except Exception:
+            self.statut_label.setText("Inactif")
+            self.statut_label.setStyleSheet("color: red")
+            self.tableau.setRowCount(0)
