@@ -8,6 +8,19 @@ class Rule:
         self.elements = elements
         self.operator = operator
         self.points = points
+
+    def matches(self, move_elements : set[str]):
+        if self.operator == "AND":
+            for element in self.elements:
+                if element not in move_elements:
+                    return False
+                return True
+        else:
+            for element in self.elements:
+                if element not in move_elements:
+                    return True
+                return False
+            
  
     def __repr__(self):
         separator = "+" if self.operator == "AND" else ","
@@ -98,3 +111,4 @@ class BattleLoader:
                 rule = self._parse_rule(line)
                 if rule:
                     self._rules_by_color[current_color].append(rule)
+        
