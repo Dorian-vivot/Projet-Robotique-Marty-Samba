@@ -2,7 +2,7 @@ from Battle_Loader import BattleLoader
 if __name__ == "__main__":
     loader = BattleLoader()
     loader.parse("[N]\nALB+ARB=1\nALU+ARU=-2")
-    for rule in loader._rules_by_color["N"]:
+    for rule in loader.rules_by_color["N"]:
         print(rule)
     loader.parse("[N]\nALB+ARB=1\nALU,ARU=-1") 
   
