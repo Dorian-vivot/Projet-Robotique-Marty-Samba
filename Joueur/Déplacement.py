@@ -1,4 +1,4 @@
-from connexionMarty import connecter, deconnecter
+from Joueur.martyConnection import connecter, deconnecter
  
 marty = connecter()
  

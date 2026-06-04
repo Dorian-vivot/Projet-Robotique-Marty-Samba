@@ -1,20 +1,26 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QProgressBar, QPushButton, QSizePolicy, QSlider, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QApplication, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QProgressBar, QPushButton, QSizePolicy, QSlider, QVBoxLayout, QWidget
+
+from martyConnection import MartyConnection
 
 class ControlWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.isConnected = False
+        self._connection = MartyConnection()
+        self._connection.connected.connect(self._onConnected)
+        self._connection.disconnected.connect(self._onDisconnected)
+        self._connection.connection_lost.connect(self._onConnectionLost)
+        self._connection.battery_update.connect(self._updateBatteryLevel)
         self._build_ui()
 
     def _build_ui(self):
         self.main_layout = QVBoxLayout(self)
+        self.top_layout = QHBoxLayout()
 
         # Groupe Box état du robot
         state_group = QGroupBox("État du robot")
-        state_group.setSizePolicy(QSizePolicy.Policy.Preferred,QSizePolicy.Policy.Maximum)
-        state_hbox = QHBoxLayout()
-        state_hbox.setSpacing(30)
+        state_group.setSizePolicy(QSizePolicy.Policy.Preferred,QSizePolicy.Policy.MinimumExpanding)
+        state_hbox = QVBoxLayout()
 
         # ------ Groupe - Etat du robot ------
 
@@ -41,7 +47,6 @@ class ControlWidget(QWidget):
         self.battery_label = QLabel("Niveau de batterie : ")
         self.battery_bar = QProgressBar()
         self.battery_bar.setRange(0,100)
-        self.battery_bar.setValue(70)
         self.battery_bar.setStyleSheet("""
             QProgressBar {
                 border: 1px solid #aaa;
@@ -60,27 +65,31 @@ class ControlWidget(QWidget):
         battery_hbox.addWidget(self.battery_bar)
         battery_hbox.addStretch()
         state_hbox.addLayout(battery_hbox)
-        state_hbox.addStretch()
 
         # Couleur de la plaque 
         color_hbox = QHBoxLayout()
         self.color_label = QLabel("Couleur de la plaque : ")
         self.color_text = QLabel("Bleu")
         self.color_text.setStyleSheet("color: blue")
-        battery_hbox.addWidget(self.color_label)
-        battery_hbox.addWidget(self.color_text)
+        color_hbox.addWidget(self.color_label)
+        color_hbox.addWidget(self.color_text)
         color_hbox.addStretch()
         state_hbox.addLayout(color_hbox)
 
+        self.disconnect_button = QPushButton("Se déconnecter")
+        self.disconnect_button.clicked.connect(self._onDisconnectButton)
+        state_hbox.addWidget(self.disconnect_button)
+        state_hbox.addStretch()
+
         # Groupe Box de connexion
         connexion_group = QGroupBox("Connexion au Robot")
-        connexion_group.setSizePolicy(QSizePolicy.Policy.Preferred,QSizePolicy.Policy.Maximum)
-        connexion_hbox = QHBoxLayout()
+        connexion_group.setSizePolicy(QSizePolicy.Policy.Preferred,QSizePolicy.Policy.Expanding)
+        connexion_hbox = QVBoxLayout()
 
-        # ------ Groupe - Connexion (Gauche) : Saisie manuelle ------
-        left_layout = QVBoxLayout()
+        # ------ Groupe - Connexion (Top) : Saisie manuelle ------
+        connection_top_layout = QVBoxLayout()
         input_layout = QHBoxLayout()
-        left_layout.addLayout(input_layout)
+        connection_top_layout.addLayout(input_layout)
 
         # Création du label
         self.label_input_ip = QLabel("Saisir IP : ")
@@ -93,11 +102,11 @@ class ControlWidget(QWidget):
 
         # Création du boutton de connexion
         self.connexion_button = QPushButton("Se connecter")
-        left_layout.addWidget(self.connexion_button)
-        left_layout.addStretch()
+        self.connexion_button.clicked.connect(self._onConnectClick)
+        connection_top_layout.addWidget(self.connexion_button)
 
-        # ------ Groupe - Connexion (Droite) : Recherche automatique ------
-        right_layout = QVBoxLayout()
+        # ------ Groupe - Connexion (Bottom) : Recherche automatique ------
+        bottom_layout = QVBoxLayout()
 
         # Liste déroulante des robots
         self.marty_list = QListWidget()
@@ -108,43 +117,86 @@ class ControlWidget(QWidget):
         test_ROBOT.setData(Qt.ItemDataRole.UserRole,"192.168.1.1")
 
         self.marty_list.addItem(test_ROBOT)
-        right_layout.addWidget(self.marty_list)
+        bottom_layout.addWidget(self.marty_list)
 
         # Création du boutton de recherche automatique
         self.scan_button = QPushButton("Lancer le scan") # TODO : Pour lancer le scan utiliser QThread pour ne pas figer l'UI car la recherche prend du temps puis actualiser la liste des robots
-        right_layout.addWidget(self.scan_button)
+        bottom_layout.addWidget(self.scan_button)
 
         # Création du boutton de recherche automatique
         self.connexion_button_auto = QPushButton("Connecter")
-        self.connexion_button_auto.clicked.connect(lambda : self._onAutoConnectClick())
-        right_layout.addWidget(self.connexion_button_auto)
-        right_layout.addStretch()
+        self.connexion_button_auto.clicked.connect(self._onAutoConnectClick)
+        bottom_layout.addWidget(self.connexion_button_auto)
+        bottom_layout.addStretch()
         
-        connexion_hbox.addLayout(left_layout)
-        connexion_hbox.addLayout(right_layout)
+        connexion_hbox.addLayout(connection_top_layout)
+        connexion_hbox.addLayout(bottom_layout)
         connexion_group.setLayout(connexion_hbox)
         state_group.setLayout(state_hbox)
         
         other_group = QGroupBox("Autres")
+        other_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
 
         # Ajout des GroupBox
-        self.main_layout.addWidget(state_group)
-        self.main_layout.addWidget(connexion_group)
+        self.top_layout.addWidget(state_group)
+        self.top_layout.addWidget(connexion_group)
+        self.main_layout.addLayout(self.top_layout)
         self.main_layout.addWidget(other_group)
-        self.main_layout.addStretch()
 
-        self._setStatusWidgets()
+        self._setStatusWidgets(False)
 
+    def _onDisconnected(self):
+        self._setStatusWidgets(False)
+
+    def _onConnected(self):
+        self._setStatusWidgets(True)
+
+    def _onConnectionLost(self):
+        self._setStatusWidgets(False)
+    
+    def _updateBatteryLevel(self, batteryLevel : int):
+        self.battery_bar.setValue(batteryLevel)
         
-    def _setStatusWidgets(self):
-        if(self.isConnected):
+    def _setStatusWidgets(self, isConnected : bool):
+        if isConnected:
             self.isConnected_status_text.setText("Connecté")
             self.isConnected_status_text.setStyleSheet("color: green")
-            self.ip_text.setText("")
+            self.ip_text.setText(self._connection.getIp())
+            self.disconnect_button.setEnabled(True)
         else:
             self.isConnected_status_text.setText("Déconnecté")
             self.isConnected_status_text.setStyleSheet("color: red")
+            self.ip_text.setText("Non connecté")
+            self.battery_bar.setValue(0)
+            self.disconnect_button.setEnabled(False)
 
+    def _onConnectClick(self):
+        ip_address = self.input_ip.text().strip()
+        if ip_address:
+            self.connexion_button.setEnabled(False)
+            self.connexion_button.setText("Connexion en cours...")
+
+            self.isConnected_status_text.setText("Tentative de connexion...")
+            self.isConnected_status_text.setStyleSheet("color: orange")
+
+            QApplication.processEvents()
+
+            isConnected = self._connection.connect(ip_address)
+
+            self.connexion_button.setEnabled(True)
+            self.connexion_button.setText("Se connecter")
+            if isConnected:
+                QMessageBox.information(self, "Succès", f"Connection réussi à Marty ({ip_address}).")
+            else:
+                self.isConnected_status_text.setText("Échec")
+                self.isConnected_status_text.setStyleSheet("color: red")
+                QMessageBox.critical(self, "Erreur de connexion", f"La connexion à {ip_address} à échouée.")
+        else:
+            QMessageBox.warning(self, "Attention", "Veuillez saisir une adresse IP avant la connection.")
+
+    def _onDisconnectButton(self):
+        self._connection.disconnect()
+    
     def _onAutoConnectClick(self):
         selected_items = self.marty_list.selectedItems()
 
