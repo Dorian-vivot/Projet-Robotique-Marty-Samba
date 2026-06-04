@@ -111,16 +111,11 @@ class BattleLoader:
                 rule = self._parse_rule(line)
                 if rule:
                     self._rules_by_color[current_color].append(rule)
-        
-    def score(self, color: str, arms: str, expression: str):
-        if not self.loaded:
-            return 0
-        color=(color or "").strip().upper()
-        if color not in self._rules_by_color():
-            return 0
-        
-        move_elements = set[str] = set()
 
+    def build_move_elements(self, arms: str, expression: str) -> set[str]: 
+
+        move_elements: set[str] = set() 
+        
         for element in (arms or "").split("+"):
             mouvement = element.strip().upper()
             if mouvement:
@@ -129,10 +124,22 @@ class BattleLoader:
         expression_element = (expression or "").strip().upper()
         if expression_element:
             move_elements.add(expression_element)
+        
+        return move_elements 
+
+        
+    def score(self, color: str, arms: str, expression: str):
+        if not self.loaded:
+            return 0
+        color=(color or "").strip().upper()
+        if color not in self._rules_by_color():
+            return 0
+        
+        move_elements = self.build_move_elements(arms, expression) 
 
         total_points = 0
         for rule in self._rules_by_color[color]:
-            if rule.maches(move_elements):
+            if rule.matches(move_elements):
                 total_points += rule.points
 
             return total_points
