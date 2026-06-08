@@ -1,5 +1,16 @@
 from PyQt6.QtCore import QThread, pyqtSignal
 
+"""
+Classe qui utilise un Thread de la bibliothèque PyQt qui tourne en arrère-plan après la connexion du robot 
+
+Toutes les 5 secondes, on demande le niveau de batterie du robot et de la couleur sous ses pieds
+Si une requête n'aboutie pas lève une exception ou retourne None alors on informe l'interface de la déconnexion du robot
+
+Cette classe peut émettre des signaux (alertes) :
+    connection_lost : émis quand le robot ne répond plus
+    battery_update(int) : niveau de batterie en pourcentage
+    color_update(str) : couleur détectée au sol
+"""
 class WatchDog(QThread):
     
     connection_lost = pyqtSignal()

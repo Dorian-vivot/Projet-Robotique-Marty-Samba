@@ -1,5 +1,8 @@
 import math
 
+"""
+Classe pour gérer la conversion d'une couleur hexadécimal et qui renvoie une couleur standard
+"""
 class ColorAlgorithm():
     def __init__(self):
         self.STANDARD_COLOURS = {

@@ -4,6 +4,16 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from colorAlgorithm import ColorAlgorithm
 from watchDog import WatchDog
 
+"""
+Classe qui gére la connexion du robot et exécute les réquêtes vers le robot
+
+Cette classe peut émettre des signaux (alertes) :
+    connected : émis quand la connexion est établie avec succès
+    disconnected : émis lors d'une déconnexion volontaire
+    connection_lost : émis quand le WatchDog détecte une perte de connexion
+    battery_update(int) : relayé depuis WatchDog
+    color_update(str) : relayé depuis WatchDog
+"""
 class MartyConnection(QObject):
 
     connected = pyqtSignal()

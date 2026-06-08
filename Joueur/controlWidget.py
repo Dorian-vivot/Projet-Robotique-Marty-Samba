@@ -3,6 +3,9 @@ from PyQt6.QtWidgets import QApplication, QGridLayout, QGroupBox, QHBoxLayout, Q
 
 from martyConnection import MartyConnection
 
+"""
+Classe qui permet de gérer l'interface (Gestion des boutons, mise à jour des champs, Gestion des signaux, etc)
+"""
 class ControlWidget(QWidget):
     def __init__(self):
         super().__init__()
