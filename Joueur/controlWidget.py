@@ -3,6 +3,9 @@ from PyQt6.QtWidgets import QApplication, QGridLayout, QGroupBox, QHBoxLayout, Q
 
 from martyConnection import MartyConnection
 
+"""
+Classe qui permet de gérer l'interface (Gestion des boutons, mise à jour des champs, Gestion des signaux, etc)
+"""
 class ControlWidget(QWidget):
     def __init__(self):
         super().__init__()
@@ -11,6 +14,7 @@ class ControlWidget(QWidget):
         self._connection.disconnected.connect(self._onDisconnected)
         self._connection.connection_lost.connect(self._onConnectionLost)
         self._connection.battery_update.connect(self._updateBatteryLevel)
+        self._connection.color_update.connect(self._updateColor)
         self._build_ui()
 
     def _build_ui(self):
@@ -69,8 +73,8 @@ class ControlWidget(QWidget):
         # Couleur de la plaque 
         color_hbox = QHBoxLayout()
         self.color_label = QLabel("Couleur de la plaque : ")
-        self.color_text = QLabel("Bleu")
-        self.color_text.setStyleSheet("color: blue")
+        self.color_text = QLabel("Aucune")
+        self.color_text.setStyleSheet("color: gray")
         color_hbox.addWidget(self.color_label)
         color_hbox.addWidget(self.color_text)
         color_hbox.addStretch()
@@ -79,6 +83,11 @@ class ControlWidget(QWidget):
         self.disconnect_button = QPushButton("Se déconnecter")
         self.disconnect_button.clicked.connect(self._onDisconnectButton)
         state_hbox.addWidget(self.disconnect_button)
+
+        self.get_color_button = QPushButton("Lire la couleur aux pieds")
+        self.get_color_button.clicked.connect(self._onGetColorButton)
+        state_hbox.addWidget(self.get_color_button)
+
         state_hbox.addStretch()
 
         # Groupe Box de connexion
@@ -156,17 +165,44 @@ class ControlWidget(QWidget):
     
     def _updateBatteryLevel(self, batteryLevel : int):
         self.battery_bar.setValue(batteryLevel)
+
+    def _updateColor(self, colorDetected : str):
+        match colorDetected:
+            case "Rouge":
+                self.color_text.setStyleSheet("color: red")
+            case "Vert":
+                self.color_text.setStyleSheet("color: green")
+            case "Bleu":
+                self.color_text.setStyleSheet("color: blue")
+            case "Jaune":
+                self.color_text.setStyleSheet("color: yellow")
+            case "Rose":
+                self.color_text.setStyleSheet("color: purple")
+            case "Blanc":
+                self.color_text.setStyleSheet("color: white")
+            case "Gris":
+                self.color_text.setStyleSheet("color: gray")
+            case "Noir":
+                self.color_text.setStyleSheet("color: black")
+            case _:
+                self.color_text.setStyleSheet("color: gray")
+                self.color_text.setText("Aucune")
+
+        self.color_text.setText(colorDetected)
+        
         
     def _setStatusWidgets(self, isConnected : bool):
         if isConnected:
             self.isConnected_status_text.setText("Connecté")
             self.isConnected_status_text.setStyleSheet("color: green")
             self.ip_text.setText(self._connection.getIp())
+            self.ip_text.setStyleSheet("color: green")
             self.disconnect_button.setEnabled(True)
         else:
             self.isConnected_status_text.setText("Déconnecté")
             self.isConnected_status_text.setStyleSheet("color: red")
             self.ip_text.setText("Non connecté")
+            self.ip_text.setStyleSheet("color: gray")
             self.battery_bar.setValue(0)
             self.disconnect_button.setEnabled(False)
 
@@ -188,7 +224,7 @@ class ControlWidget(QWidget):
             if isConnected:
                 QMessageBox.information(self, "Succès", f"Connection réussi à Marty ({ip_address}).")
             else:
-                self.isConnected_status_text.setText("Échec")
+                self.isConnected_status_text.setText("Échec de la connexion")
                 self.isConnected_status_text.setStyleSheet("color: red")
                 QMessageBox.critical(self, "Erreur de connexion", f"La connexion à {ip_address} à échouée.")
         else:
@@ -196,6 +232,12 @@ class ControlWidget(QWidget):
 
     def _onDisconnectButton(self):
         self._connection.disconnect()
+
+    def _onGetColorButton(self):
+        if self._connection.isConnected():
+            read_color = self._connection.getStandardFootColor()
+            if read_color is not None:
+                self._updateColor(read_color)
     
     def _onAutoConnectClick(self):
         selected_items = self.marty_list.selectedItems()
