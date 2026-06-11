@@ -14,8 +14,8 @@ class Rule:
         if self.operator == "AND":
             for element in self.elements:
                 if element not in move_elements:
-                    return False
-                return True
+                    return True
+                return False
         else:
             for element in self.elements:
                 if element not in move_elements:
@@ -27,7 +27,7 @@ class Rule:
         separator = "+" if self.operator == "AND" else ","
         return f"Rule({separator.join(self.elements)} → {self.points:+d})"
 
-
+#Charge et parse un fichier .battle puis calcule les points d'un mouvement.
 class BattleLoader:
  
     def __init__(self):
@@ -36,7 +36,7 @@ class BattleLoader:
         self.loaded: bool = False
         self.file_path: str = ""
 
-
+    #Charge les règles depuis un fichier .battle
     def load_path(self, path : str):
 
         contenu = Path(path).read_text()
@@ -44,7 +44,7 @@ class BattleLoader:
         self.file_path = path
         self.loaded = True
         
-
+    #Parse une ligne du fichier .battle
     @staticmethod
     def _parse_rule(line: str):
         if "=" not in line:
@@ -92,7 +92,7 @@ class BattleLoader:
             operator = "AND"
 
         return Rule(elements, operator, points)
- 
+    #Parse le contenu d'un fichier .battle
     def parse(self, content: str) -> None:
         self.max_steps = 10
         self.rules_by_color = {}
@@ -121,7 +121,7 @@ class BattleLoader:
                 rule = self._parse_rule(line)
                 if rule:
                     self.rules_by_color[current_color].append(rule)
-
+    #Construit l'ensemble des éléments d'un mouvementpour pouvoir le comparer aux règles.
     def build_move_elements(self, arms: str, expression: str) -> set[str]: 
 
         move_elements: set[str] = set() 
@@ -142,7 +142,7 @@ class BattleLoader:
         if not self.loaded:
             return 0
         color=(color or "").strip().upper()
-        if color not in self.rules_by_color():
+        if color not in self.rules_by_color:
             return 0
         
         move_elements = self.build_move_elements(arms, expression) 
@@ -152,4 +152,4 @@ class BattleLoader:
             if rule.matches(move_elements):
                 total_points += rule.points
 
-            return total_points
+        return total_points
