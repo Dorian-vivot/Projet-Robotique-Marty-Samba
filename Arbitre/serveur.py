@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 import uuid
 import datetime
 
+from Battle_Loader import BattleLoader
+
 app = Flask(__name__)
 
 # { robot_id: { 'score': int, 'nombre_pas': int } }
@@ -40,7 +42,8 @@ def start():
         return jsonify({'erreur': 'Robot inconnu'}), 404
     robots_connectes[robot_id]['score'] = 0
     robots_connectes[robot_id]['nombre_pas'] = 0
-    log(f"Chorégraphie démarrée pour {robot_id}")
+    nb_mouvements = BattleLoader.max_steps
+    log(f"Chorégraphie démarrée pour {robot_id} ({nb_mouvements} mouvements)")
     return jsonify(0)  # nombre de mouvements — à définir quand le fichier .battle sera chargé
 
 
@@ -54,7 +57,10 @@ def step():
     if robot_id not in robots_connectes:
         return jsonify({'erreur': 'Robot inconnu'}), 404
     robots_connectes[robot_id]['nombre_pas'] += 1
-    log(f"{robot_id} | couleur={couleur} bras={mouvement_bras} expression={expression}")
+    points = BattleLoader.score(couleur, mouvement_bras, expression)
+    robots_connectes[robot_id]['score'] += points
+    log(f"{robot_id} | couleur={couleur} bras={mouvement_bras} expression={expression} -> {points:+d} points "
+        f"(total: {robots_connectes[robot_id]['score']})")
     return jsonify(0)  # points — calcul à implémenter dans la branche scoring
 
 
