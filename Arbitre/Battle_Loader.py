@@ -153,3 +153,14 @@ class BattleLoader:
                 total_points += rule.points
 
         return total_points
+    #Retourne un résumé des règles chargées
+    def summary(self):
+        if not self.loaded:
+            return "Aucun fichier .battle chargé."
+        
+        lines = [f"Fichier : {self.file_path}", f"Mouvements max (MVS) : {self.max_steps}"]
+        for color, rules in self.rules_by_color.items():
+            lines.append(f"  [{color}]")
+            for rule in rules:
+                lines.append(f"    {rule}")
+        return "\n".join(lines)
