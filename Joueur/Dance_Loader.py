@@ -20,7 +20,7 @@ class DanceStep:
         self.direction = direction  # "U", "D", "L", "R", "B"
         self.arms: str = ""
         self.expression: str = ""
-
+        
     def __repr__(self):
         return f"DanceStep({self.nb_pas}{self.direction})"
 
@@ -50,11 +50,22 @@ class Dance_Loader:
     
     def load_path(self, path: str):
         contenu = Path(path).read_text()
+        self.parse(contenu)
         self.file_path = path
         self.loaded = True
         print(f"[DanceLoader] Chargé : {path} | "
             f"{len(self.steps)} mouvements | "
             f"{len(self.action_by_color)} règles ACT")
+        
+    def parse(self, content: str):
+        lines = [line.strip() for line in content.splitlines()]
+        try:
+            action_index = next(index for index, line in enumerate(lines) if line.upper() == "ACT")
+        except StopIteration:
+            action_index = len(lines)
+        self.steps = self.parse_sequence(lines[:action_index])
+        self.action_by_color = self.parse_act(lines[action_index + 1:])
+
     
     @staticmethod
     def parse_step_line(line: str):
@@ -69,7 +80,6 @@ class Dance_Loader:
             else:
                 direction = char
         if direction not in Valid_Directions:
-            print(f"[parse] Direction inconnue : {direction!r}")
             return None
         return DanceStep(int(nombre_str), direction)
     
@@ -82,3 +92,26 @@ class Dance_Loader:
             if step:
                 steps.append(step)
         return steps
+    
+    def parse_act(self, lines: list[str]):
+        color_actions = {}
+        for line in lines:
+            if not line:
+                continue
+            mouvements = line.strip().upper().split()
+            if len(mouvements) < 2:
+                continue
+            color = mouvements[0]
+            arms = []
+            expression = ""
+            for mouvement in mouvements[1:]:
+                if mouvement in Valid_Arms:
+                    arms.append(mouvement)
+                elif mouvement in Valid_Expressions:
+                    expression = mouvement
+            color_actions[color] = Action_By_Color(color, arms, expression)
+        return color_actions
+
+    def get_action_for_color(self, color: str):
+        return self.action_by_color.get(color.strip().upper())
+

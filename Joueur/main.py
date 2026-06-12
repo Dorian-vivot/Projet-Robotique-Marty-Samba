@@ -10,23 +10,26 @@ def main():
     sys.exit(app.exec())
 
 if __name__ == "__main__":
+    loader=Dance_Loader()
+    loader.load_path("example.dance")
 
-    seq_lines = [
-    "SEQ 1",
-    "1U",
-    "1L",
-    "2B",
-    "2R",
-    "1U",
-    "1L",
-    "",           # ligne vide intentionnelle
-    "MAUVAISE",   # ligne invalide
-    ]
-
-    print("=== Parsing section SEQ ===")
-    steps = Dance_Loader().parse_sequence(seq_lines)
-    print(f"\n{len(steps)} mouvements parsés :")
-    for i, step in enumerate(steps, 1):
+    print("\n=== Mouvements chargés ===")
+    for i, step in enumerate(loader.steps, 1):
         print(f"  {i}. {step}")
+
+    print("\n=== Règles ACT chargées ===")
+    for color, action in loader.action_by_color.items():
+        print(f"  {action}")
+
+    print("\n=== Lookup couleur ===")
+    for couleur in ["N", "B", "R", "V"]:
+        result = loader.get_action_for_color(couleur)
+        print(f"  Couleur {couleur!r} → {result}")
+
+    print("\n=== Chargement d'un fichier inexistant ===")
+    try:
+        loader.load_path("inexistant.dance")
+    except FileNotFoundError as e:
+        print(f"  FileNotFoundError : {e}")
     sys.exit()
     main()
