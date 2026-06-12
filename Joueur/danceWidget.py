@@ -1,9 +1,90 @@
+import time
+
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox,
                               QLabel, QLineEdit, QPushButton, QFileDialog)
+from PyQt6.QtCore import QThread, pyqtSignal
 
 from arbitreClient import ArbitreClient
 from martyConnection import MartyConnection
 from Dance_Loader import Dance_Loader
+
+
+class _DanceThread(QThread):
+    """Exécute la chorégraphie dans un thread séparé pour ne pas bloquer l'UI."""
+    score_update = pyqtSignal(int)
+
+    def __init__(self, connection, arbitre, dance_loader, nb_mouvements):
+        super().__init__()
+        self._connection = connection
+        self._arbitre = arbitre
+        self._loader = dance_loader
+        self._nb = nb_mouvements
+
+    def run(self):
+        sequence = self._loader.get_sequence(self._nb)
+        for step in sequence:
+            self._marcher(step)
+            time.sleep(1.8)  # attend que Marty finisse le mouvement
+            couleur_standard = self._connection.getStandardFootColor() or ''
+            lettre = self._map_couleur(couleur_standard)
+            action = self._loader.get_action_for_color(lettre)
+            arm = action.get_arms_string() if action else ''
+            exp = action.expression if action else ''
+            if action:
+                self._executer_expression(arm, exp)
+            self._arbitre.step(lettre, arm, exp)
+            score = self._arbitre.score()
+            self.score_update.emit(score)
+
+    def _marcher(self, step):
+        # Convertit la direction du .dance en commande Marty
+        for _ in range(step.nb_pas):
+            if step.direction == 'U':
+                self._connection.move('forward')
+            elif step.direction in ('D', 'B'):
+                self._connection.move('backward')
+            elif step.direction == 'L':
+                self._connection.sidestep('left')
+            elif step.direction == 'R':
+                self._connection.sidestep('right')
+
+    def _executer_expression(self, arms_str, exp):
+        # Exécute les bras et l'expression sur Marty
+        arm_map = {
+            'ALU': ('left',  'raise'),
+            'ALB': ('left',  'back'),
+            'ARU': ('right', 'raise'),
+            'ARB': ('right', 'back'),
+        }
+        for arm_code in arms_str.split('+'):
+            if arm_code in arm_map:
+                side, movement = arm_map[arm_code]
+                self._connection.moveArm(side, movement)
+        exp_map = {
+            'XNT': ('normal',  (128, 128, 128)),
+            'XSD': ('normal',  (0,   0,   255)),
+            'XNG': ('angry',   (255, 0,   0  )),
+            'XHP': ('excited', (0,   255, 0  )),
+        }
+        if exp in exp_map:
+            pose, color = exp_map[exp]
+            self._connection.setExpression(pose, color)
+
+    def _map_couleur(self, couleur_standard):
+        # Convertit le nom de couleur complet en lettre utilisée dans .dance et .battle
+        mapping = {
+            'Rouge':      'R',
+            'Bleu':       'B',
+            'Bleu Ciel':  'B',
+            'Bleu Foncé': 'B',
+            'Vert':       'V',
+            'Jaune':      'J',
+            'Mauve':      'M',
+            'Blanc':      'W',
+            'Gris':       'G',
+            'Noir':       'N',
+        }
+        return mapping.get(couleur_standard, '')
 
 
 class DanceWidget(QWidget):
@@ -125,6 +206,11 @@ class DanceWidget(QWidget):
         try:
             nb_mouvements = self._arbitre.start()
             self.score_label.setText(f"0  ({nb_mouvements} mouvements)")
+            self.start_btn.setEnabled(False)
+            self._thread = _DanceThread(self._connection, self._arbitre, self._dance_loader, nb_mouvements)
+            self._thread.score_update.connect(lambda s: self.score_label.setText(str(s)))
+            self._thread.finished.connect(lambda: self.start_btn.setEnabled(True))
+            self._thread.start()
         except Exception:
             self.statut_label.setText("Erreur : arbitre inaccessible")
             self.statut_label.setStyleSheet("color: red")
