@@ -8,9 +8,9 @@ from arbitreClient import ArbitreClient
 Classe qui permet de gérer l'interface (Gestion des boutons, mise à jour des champs, Gestion des signaux, etc)
 """
 class ControlWidget(QWidget):
-    def __init__(self):
+    def __init__(self, connection: MartyConnection):
         super().__init__()
-        self._connection = MartyConnection()
+        self._connection = connection
         self._connection.connected.connect(self._onConnected)
         self._connection.disconnected.connect(self._onDisconnected)
         self._connection.connection_lost.connect(self._onConnectionLost)

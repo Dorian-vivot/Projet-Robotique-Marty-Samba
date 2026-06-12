@@ -3,11 +3,13 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox,
 
 
 from arbitreClient import ArbitreClient
+from martyConnection import MartyConnection
 
 
 class DanceWidget(QWidget):
-    def __init__(self):
+    def __init__(self, connection: MartyConnection):
         super().__init__()
+        self._connection = connection
         self._arbitre = ArbitreClient()
         self._build_ui()
 
