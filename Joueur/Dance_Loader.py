@@ -55,3 +55,20 @@ class Dance_Loader:
         print(f"[DanceLoader] Chargé : {path} | "
             f"{len(self.steps)} mouvements | "
             f"{len(self.action_by_color)} règles ACT")
+    
+    @staticmethod
+    def parse_step_line(line: str):
+        line = line.strip().upper()
+        if not line:
+            return None
+        nombre_str = ""
+        direction = ""
+        for char in line:
+            if char.isdigit():
+                nombre_str += char
+            else:
+                direction = char
+        if direction not in Valid_Directions:
+            print(f"[parse] Direction inconnue : {direction!r}")
+            return None
+        return DanceStep(int(nombre_str), direction)

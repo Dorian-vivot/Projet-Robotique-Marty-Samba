@@ -11,14 +11,18 @@ def main():
 
 if __name__ == "__main__":
 
-    loader = Dance_Loader()
-    loader.load_path("example.dance")
+    lignes_valides = ["1U", "1L", "2B", "2R", "10U", "3D"]
+    lignes_invalides = ["", "ZZ", "U1", "1Z", "abc"]
 
-    print("\n=== Chargement d'un fichier inexistant ===")
-    try:
-        loader.load_path("inexistant.dance")
-    except FileNotFoundError as e:
-        print(f"  FileNotFoundError : {e}")
+    print("=== Lignes valides ===")
+    for ligne in lignes_valides:
+        step = Dance_Loader.parse_step_line(ligne)
+        print(f"  {ligne!r} → {step}")
+
+    print("\n=== Lignes invalides ===")
+    for ligne in lignes_invalides:
+        step = Dance_Loader.parse_step_line(ligne)
+        print(f"  {ligne!r} → {step}")
 
     sys.exit()
     main()
