@@ -115,3 +115,13 @@ class Dance_Loader:
     def get_action_for_color(self, color: str):
         return self.action_by_color.get(color.strip().upper())
 
+    def get_sequence(self, max_steps: int):
+        if not self.loaded or not self.steps:
+            return []
+
+        nb_definis = len(self.steps)
+        sequence = []
+        for i in range(max_steps):
+            src = self.steps[i % nb_definis]
+            sequence.append(DanceStep(src.nb_pas, src.direction))
+        return sequence
