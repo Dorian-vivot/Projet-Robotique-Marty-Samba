@@ -125,3 +125,31 @@ class Dance_Loader:
             src = self.steps[i % nb_definis]
             sequence.append(DanceStep(src.nb_pas, src.direction))
         return sequence
+    
+    def apply_color_to_step(self, step: DanceStep, color: str) -> None:
+        action = self.get_action_for_color(color)
+        if action:
+            step.arms = action.get_arms_string()
+            step.expression = action.expression
+
+
+
+    def get_summary(self) -> str:
+        if not self.loaded:
+            return "Aucun fichier .dance chargé"
+        lines = [
+            f"Fichier : {self.file_path}",
+            f"{len(self.steps)} mouvement(s) défini(s)",
+            "",
+            "Séquence :"
+        ]
+        for index, step in enumerate(self.steps, 1):
+            lines.append(f"  {index}. {step.nb_pas} pas => {step.direction}")
+        lines += ["", "Règles ACT :"]
+        if self.action_by_color:
+            for color, action in self.action_by_color.items():
+                lines.append(f"  [{color}] bras={action.get_arms_string()!r} "
+                              f"expression={action.expression!r}")
+        else:
+            lines.append("  (aucune règle définie)")
+        return "\n".join(lines)
