@@ -41,7 +41,7 @@ class WatchDog(QThread):
                     self.connection_lost.emit()
                     self._is_running = False
                     print(f"Erreur avec la communication avec le robot : {e}")
-            self.sleep(5)
+            self.msleep(500)
 
     def stop(self):
         self._is_running = False

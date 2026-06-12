@@ -8,9 +8,10 @@ class ColorAlgorithm():
         self.STANDARD_COLOURS = {
             "Rouge": (125, 23, 33),
             "Vert": (47, 44, 41),
-            "Bleu": (64, 65, 90),
+            "Bleu Ciel": (80, 81, 103),
+            "Bleu Foncé": (36, 24, 32),
             "Jaune": (17, 103, 37),
-            "Rose" : (143, 33, 57),
+            "Mauve" : (143, 33, 57),
             "Blanc": (255, 255, 255),
             "Gris": (128, 128, 128),
             "Noir": (0, 0, 0)

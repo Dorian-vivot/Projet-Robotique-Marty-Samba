@@ -283,11 +283,13 @@ class ControlWidget(QWidget):
                 self.color_text.setStyleSheet("color: red")
             case "Vert":
                 self.color_text.setStyleSheet("color: green")
-            case "Bleu":
-                self.color_text.setStyleSheet("color: blue")
+            case "Bleu Ciel":
+                self.color_text.setStyleSheet("color: lightblue")
+            case "Bleu Foncé":
+                self.color_text.setStyleSheet("color: darkblue")
             case "Jaune":
                 self.color_text.setStyleSheet("color: yellow")
-            case "Rose":
+            case "Mauve":
                 self.color_text.setStyleSheet("color: purple")
             case "Blanc":
                 self.color_text.setStyleSheet("color: white")

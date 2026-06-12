@@ -81,7 +81,6 @@ class MartyConnection(QObject):
         if self._marty is not None and self._is_connected:
             try:
                 hex_color = self._marty.get_color_sensor_hex(colorSensorSide)
-                print(hex_color)
                 return self._colorAlgorithm.get_color_hex_to_standard(hex_color)
             except Exception as e:
                 print(f"Erreur pour récupérer la couleur aux pieds : {e}")
