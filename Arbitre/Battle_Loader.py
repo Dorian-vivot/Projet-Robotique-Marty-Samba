@@ -14,13 +14,13 @@ class Rule:
         if self.operator == "AND":
             for element in self.elements:
                 if element not in move_elements:
-                    return True
-                return False
+                    return False
+            return True
         else:
             for element in self.elements:
-                if element not in move_elements:
+                if element in move_elements:
                     return True
-                return False
+            return False
             
  
     def __repr__(self):
