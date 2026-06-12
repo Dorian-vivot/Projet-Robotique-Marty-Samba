@@ -2,6 +2,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QProgressBar, QPushButton, QSizePolicy, QSlider, QVBoxLayout, QWidget
 
 from martyConnection import MartyConnection
+from arbitreClient import ArbitreClient
 
 """
 Classe qui permet de gérer l'interface (Gestion des boutons, mise à jour des champs, Gestion des signaux, etc)
@@ -15,6 +16,7 @@ class ControlWidget(QWidget):
         self._connection.connection_lost.connect(self._onConnectionLost)
         self._connection.battery_update.connect(self._updateBatteryLevel)
         self._connection.color_update.connect(self._updateColor)
+        self._arbitre = ArbitreClient()
         self._build_ui()
 
     def _build_ui(self):
@@ -155,12 +157,18 @@ class ControlWidget(QWidget):
         self._setStatusWidgets(False)
 
     def _onDisconnected(self):
+        self._arbitre.bye()
         self._setStatusWidgets(False)
 
     def _onConnected(self):
+        try:
+            self._arbitre.hello()
+        except Exception:
+            pass
         self._setStatusWidgets(True)
 
     def _onConnectionLost(self):
+        self._arbitre.bye()
         self._setStatusWidgets(False)
     
     def _updateBatteryLevel(self, batteryLevel : int):
