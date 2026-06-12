@@ -10,6 +10,8 @@ class DanceWidget(QWidget):
     def __init__(self, connection: MartyConnection):
         super().__init__()
         self._connection = connection
+        self._connection.disconnected.connect(self._on_marty_deconnecte)
+        self._connection.connection_lost.connect(self._on_marty_deconnecte)
         self._arbitre = ArbitreClient()
         self._dance_loader = Dance_Loader()
         self._build_ui()
@@ -75,6 +77,11 @@ class DanceWidget(QWidget):
         chore_group.setLayout(chore_layout)
         layout.addWidget(chore_group)
         layout.addStretch()
+
+    def _on_marty_deconnecte(self):
+        # Si Marty se déconnecte, on prévient l'arbitre automatiquement
+        if self._arbitre.is_connected():
+            self._deconnecter()
 
     def _charger_dance(self):
         chemin, _ = QFileDialog.getOpenFileName(self, "Charger fichier .dance", "", "Fichiers Dance (*.dance)")
