@@ -12,6 +12,7 @@ from Dance_Loader import Dance_Loader
 class _DanceThread(QThread):
     """Exécute la chorégraphie dans un thread séparé pour ne pas bloquer l'UI."""
     score_update = pyqtSignal(int)
+    erreur = pyqtSignal(str)
 
     def __init__(self, connection, arbitre, dance_loader, nb_mouvements):
         super().__init__()
@@ -21,20 +22,23 @@ class _DanceThread(QThread):
         self._nb = nb_mouvements
 
     def run(self):
-        sequence = self._loader.get_sequence(self._nb)
-        for step in sequence:
-            self._marcher(step)
-            time.sleep(1.8)  # attend que Marty finisse le mouvement
-            couleur_standard = self._connection.getStandardFootColor() or ''
-            lettre = self._map_couleur(couleur_standard)
-            action = self._loader.get_action_for_color(lettre)
-            arm = action.get_arms_string() if action else ''
-            exp = action.expression if action else ''
-            if action:
-                self._executer_expression(arm, exp)
-            self._arbitre.step(lettre, arm, exp)
-            score = self._arbitre.score()
-            self.score_update.emit(score)
+        try:
+            sequence = self._loader.get_sequence(self._nb)
+            for step in sequence:
+                self._marcher(step)
+                time.sleep(1.8)  # attend que Marty finisse le mouvement
+                couleur_standard = self._connection.getStandardFootColor() or ''
+                lettre = self._map_couleur(couleur_standard)
+                action = self._loader.get_action_for_color(lettre)
+                arm = action.get_arms_string() if action else ''
+                exp = action.expression if action else ''
+                if action:
+                    self._executer_expression(arm, exp)
+                self._arbitre.step(lettre, arm, exp)
+                score = self._arbitre.score()
+                self.score_update.emit(score)
+        except Exception as e:
+            self.erreur.emit(str(e))
 
     def _marcher(self, step):
         # Convertit la direction du .dance en commande Marty
@@ -222,6 +226,7 @@ class DanceWidget(QWidget):
             self.start_btn.setEnabled(False)
             self._thread = _DanceThread(self._connection, self._arbitre, self._dance_loader, nb_mouvements)
             self._thread.score_update.connect(lambda s: self.score_label.setText(str(s)))
+            self._thread.erreur.connect(lambda msg: self.statut_label.setText(f"Erreur : {msg}"))
             self._thread.finished.connect(self._update_start_btn)
             self._thread.start()
         except Exception:
