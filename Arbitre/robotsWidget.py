@@ -1,6 +1,7 @@
 import requests
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox,
-                              QLabel, QTableWidget, QTableWidgetItem, QPushButton)
+                              QLabel, QTableWidget, QTableWidgetItem, QPushButton,
+                              QFileDialog)
 from PyQt6.QtCore import QTimer
 
 BASE = 'http://localhost:8000'
@@ -44,8 +45,39 @@ class RobotsWidget(QWidget):
 
         robots_group.setLayout(robots_layout)
 
+        # Chargement du fichier .battle
+        battle_group = QGroupBox("Fichier Battle")
+        battle_layout = QHBoxLayout()
+        self.battle_label = QLabel("Aucun fichier chargé")
+        self.battle_label.setStyleSheet("color: gray")
+        self.battle_btn = QPushButton("Charger fichier .battle")
+        self.battle_btn.clicked.connect(self._charger_battle)
+        battle_layout.addWidget(self.battle_label)
+        battle_layout.addWidget(self.battle_btn)
+        battle_group.setLayout(battle_layout)
+
         layout.addWidget(statut_group)
+        layout.addWidget(battle_group)
         layout.addWidget(robots_group)
+
+    def _charger_battle(self):
+        # Ouvre un explorateur de fichiers pour sélectionner un fichier .battle
+        chemin, _ = QFileDialog.getOpenFileName(self, "Charger fichier .battle", "", "Fichiers Battle (*.battle)")
+        if not chemin:
+            return
+        try:
+            # Envoie le chemin au serveur qui charge les règles via BattleLoader
+            r = requests.post(f'{BASE}/battle', json={'path': chemin}, timeout=2)
+            if r.status_code == 200:
+                nom_fichier = chemin.split('/')[-1]
+                self.battle_label.setText(f"Chargé : {nom_fichier}")
+                self.battle_label.setStyleSheet("color: green")
+            else:
+                self.battle_label.setText("Erreur : fichier invalide")
+                self.battle_label.setStyleSheet("color: red")
+        except Exception:
+            self.battle_label.setText("Erreur : serveur inactif")
+            self.battle_label.setStyleSheet("color: red")
 
     def _rafraichir(self):
         try:
