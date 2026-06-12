@@ -91,6 +91,7 @@ class DanceWidget(QWidget):
     def __init__(self, connection: MartyConnection):
         super().__init__()
         self._connection = connection
+        self._connection.connected.connect(self._update_start_btn)
         self._connection.disconnected.connect(self._on_marty_deconnecte)
         self._connection.connection_lost.connect(self._on_marty_deconnecte)
         self._arbitre = ArbitreClient()
@@ -159,6 +160,13 @@ class DanceWidget(QWidget):
         layout.addWidget(chore_group)
         layout.addStretch()
 
+    def _update_start_btn(self):
+        # Démarrer est disponible seulement si arbitre connecté ET .dance chargé ET Marty connecté
+        pret = (self._arbitre.is_connected()
+                and self._dance_loader.loaded
+                and self._connection.isConnected())
+        self.start_btn.setEnabled(pret)
+
     def _on_marty_deconnecte(self):
         # Si Marty se déconnecte, on prévient l'arbitre automatiquement
         if self._arbitre.is_connected():
@@ -176,6 +184,7 @@ class DanceWidget(QWidget):
         except Exception:
             self.dance_label.setText("Erreur : fichier invalide")
             self.dance_label.setStyleSheet("color: red")
+        self._update_start_btn()
 
     def _connecter(self):
         ip = self.input_ip.text().strip() or 'localhost'
@@ -187,7 +196,7 @@ class DanceWidget(QWidget):
             self.connect_btn.setText("Se déconnecter")
             self.connect_btn.clicked.disconnect()
             self.connect_btn.clicked.connect(self._deconnecter)
-            self.start_btn.setEnabled(True)
+            self._update_start_btn()
         except Exception:
             self.statut_label.setText("Erreur : arbitre inaccessible")
             self.statut_label.setStyleSheet("color: red")
@@ -199,17 +208,21 @@ class DanceWidget(QWidget):
         self.connect_btn.setText("Se connecter à l'arbitre")
         self.connect_btn.clicked.disconnect()
         self.connect_btn.clicked.connect(self._connecter)
-        self.start_btn.setEnabled(False)
+        self._update_start_btn()
         self.score_label.setText("—")
 
     def _demarrer(self):
+        if not self._connection.isConnected():
+            self.statut_label.setText("Erreur : Marty non connecté")
+            self.statut_label.setStyleSheet("color: red")
+            return
         try:
             nb_mouvements = self._arbitre.start()
             self.score_label.setText(f"0  ({nb_mouvements} mouvements)")
             self.start_btn.setEnabled(False)
             self._thread = _DanceThread(self._connection, self._arbitre, self._dance_loader, nb_mouvements)
             self._thread.score_update.connect(lambda s: self.score_label.setText(str(s)))
-            self._thread.finished.connect(lambda: self.start_btn.setEnabled(True))
+            self._thread.finished.connect(self._update_start_btn)
             self._thread.start()
         except Exception:
             self.statut_label.setText("Erreur : arbitre inaccessible")
