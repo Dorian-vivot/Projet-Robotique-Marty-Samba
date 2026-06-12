@@ -1,3 +1,4 @@
+from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QProgressBar, QPushButton, QSizePolicy, QSlider, QVBoxLayout, QWidget
 
@@ -15,6 +16,10 @@ class ControlWidget(QWidget):
         self._connection.connection_lost.connect(self._onConnectionLost)
         self._connection.battery_update.connect(self._updateBatteryLevel)
         self._connection.color_update.connect(self._updateColor)
+        QShortcut(QKeySequence(Qt.Key.Key_Up), self, self._onKeyUpArrow)
+        QShortcut(QKeySequence(Qt.Key.Key_Down), self, self._onKeyDownArrow)
+        QShortcut(QKeySequence(Qt.Key.Key_Right), self, self._onKeyRightArrow)
+        QShortcut(QKeySequence(Qt.Key.Key_Left), self, self._onKeyLeftArrow)
         self._build_ui()
 
     def _build_ui(self):
@@ -27,7 +32,6 @@ class ControlWidget(QWidget):
         state_hbox = QVBoxLayout()
 
         # ------ Groupe - Etat du robot ------
-
         # Statut de connexion
         isConnected_hbox = QHBoxLayout()
         self.isConnected_status_label = QLabel("Statut de connection : ")
@@ -355,8 +359,20 @@ class ControlWidget(QWidget):
     def _onMoveClick(self, direction: str):
         self._connection.move(direction)
 
+    def _onKeyUpArrow(self):
+        self._connection.move("forward")
+
+    def _onKeyDownArrow(self):
+       self._connection.move("backward")
+
     def _onSidestepClick(self, side: str):
         self._connection.sidestep(side)
+
+    def _onKeyRightArrow(self):
+        self._connection.sidestep("right")
+
+    def _onKeyLeftArrow(self):
+        self._connection.sidestep("left")
 
     def _onTurnClick(self, direction: str):
         self._connection.turn(direction)
