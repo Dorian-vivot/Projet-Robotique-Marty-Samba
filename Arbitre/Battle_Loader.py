@@ -60,11 +60,11 @@ class BattleLoader:
         combination = parts[0].strip()
         points_str = parts[1].strip()
 
-        if not points_str.isdigit():
+        try:
+            points = int(points_str)
+        except ValueError:
             print(f"Ligne ignorée : {line}")
             return None
-
-        points = int(points_str)
 
         elements = []
 
