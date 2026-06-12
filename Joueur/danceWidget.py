@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGroupBox,
-                              QLabel, QLineEdit, QPushButton)
-
+                              QLabel, QLineEdit, QPushButton, QFileDialog)
 
 from arbitreClient import ArbitreClient
 from martyConnection import MartyConnection
+from Dance_Loader import Dance_Loader
 
 
 class DanceWidget(QWidget):
@@ -11,6 +11,7 @@ class DanceWidget(QWidget):
         super().__init__()
         self._connection = connection
         self._arbitre = ArbitreClient()
+        self._dance_loader = Dance_Loader()
         self._build_ui()
 
     def _build_ui(self):
@@ -49,6 +50,16 @@ class DanceWidget(QWidget):
         chore_group = QGroupBox("Chorégraphie")
         chore_layout = QVBoxLayout()
 
+        # Bouton charger .dance
+        dance_layout = QHBoxLayout()
+        self.dance_label = QLabel("Aucun fichier chargé")
+        self.dance_label.setStyleSheet("color: gray")
+        self.load_dance_btn = QPushButton("Charger fichier .dance")
+        self.load_dance_btn.clicked.connect(self._charger_dance)
+        dance_layout.addWidget(self.dance_label)
+        dance_layout.addWidget(self.load_dance_btn)
+        chore_layout.addLayout(dance_layout)
+
         self.start_btn = QPushButton("Démarrer la chorégraphie")
         self.start_btn.setEnabled(False)
         self.start_btn.clicked.connect(self._demarrer)
@@ -64,6 +75,19 @@ class DanceWidget(QWidget):
         chore_group.setLayout(chore_layout)
         layout.addWidget(chore_group)
         layout.addStretch()
+
+    def _charger_dance(self):
+        chemin, _ = QFileDialog.getOpenFileName(self, "Charger fichier .dance", "", "Fichiers Dance (*.dance)")
+        if not chemin:
+            return
+        try:
+            self._dance_loader.load_path(chemin)
+            nom = chemin.split('/')[-1]
+            self.dance_label.setText(f"Chargé : {nom}")
+            self.dance_label.setStyleSheet("color: green")
+        except Exception:
+            self.dance_label.setText("Erreur : fichier invalide")
+            self.dance_label.setStyleSheet("color: red")
 
     def _connecter(self):
         ip = self.input_ip.text().strip() or 'localhost'
