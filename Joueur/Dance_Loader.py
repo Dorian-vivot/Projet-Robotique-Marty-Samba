@@ -72,3 +72,13 @@ class Dance_Loader:
             print(f"[parse] Direction inconnue : {direction!r}")
             return None
         return DanceStep(int(nombre_str), direction)
+    
+    def parse_sequence(self, lines: list[str]):
+        steps = []
+        for line in lines:
+            if not line or line.upper().startswith("SEQ"):
+                continue
+            step = self.parse_step_line(line)
+            if step:
+                steps.append(step)
+        return steps

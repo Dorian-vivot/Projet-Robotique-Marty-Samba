@@ -11,18 +11,22 @@ def main():
 
 if __name__ == "__main__":
 
-    lignes_valides = ["1U", "1L", "2B", "2R", "10U", "3D"]
-    lignes_invalides = ["", "ZZ", "U1", "1Z", "abc"]
+    seq_lines = [
+    "SEQ 1",
+    "1U",
+    "1L",
+    "2B",
+    "2R",
+    "1U",
+    "1L",
+    "",           # ligne vide intentionnelle
+    "MAUVAISE",   # ligne invalide
+    ]
 
-    print("=== Lignes valides ===")
-    for ligne in lignes_valides:
-        step = Dance_Loader.parse_step_line(ligne)
-        print(f"  {ligne!r} → {step}")
-
-    print("\n=== Lignes invalides ===")
-    for ligne in lignes_invalides:
-        step = Dance_Loader.parse_step_line(ligne)
-        print(f"  {ligne!r} → {step}")
-
+    print("=== Parsing section SEQ ===")
+    steps = Dance_Loader().parse_sequence(seq_lines)
+    print(f"\n{len(steps)} mouvements parsés :")
+    for i, step in enumerate(steps, 1):
+        print(f"  {i}. {step}")
     sys.exit()
     main()
