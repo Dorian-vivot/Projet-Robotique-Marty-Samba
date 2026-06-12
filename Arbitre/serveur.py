@@ -6,6 +6,9 @@ from Battle_Loader import BattleLoader
 
 app = Flask(__name__)
 
+# Instance du BattleLoader — vide au démarrage, chargée via /battle
+loader = BattleLoader()
+
 # { robot_id: { 'score': int, 'nombre_pas': int } }
 robots_connectes = {}
 
@@ -13,6 +16,7 @@ robots_connectes = {}
 activite = []
 
 
+# Ajoute un message dans le journal et l'affiche dans le terminal
 def log(message):
     heure = datetime.datetime.now().strftime("%H:%M:%S")
     activite.append({"heure": heure, "message": message})
@@ -21,6 +25,7 @@ def log(message):
     print(f"[{heure}] {message}")
 
 
+# Vérifie que le serveur est en ligne — retourne le numéro de version
 @app.route('/', methods=['GET'])
 def version():
     return '1.2'
@@ -42,9 +47,9 @@ def start():
         return jsonify({'erreur': 'Robot inconnu'}), 404
     robots_connectes[robot_id]['score'] = 0
     robots_connectes[robot_id]['nombre_pas'] = 0
-    nb_mouvements = BattleLoader.max_steps
+    nb_mouvements = loader.max_steps
     log(f"Chorégraphie démarrée pour {robot_id} ({nb_mouvements} mouvements)")
-    return jsonify(0)  # nombre de mouvements — à définir quand le fichier .battle sera chargé
+    return jsonify(nb_mouvements)
 
 #reçoit un pas à effectuer par le robot et calcule les points obtenus
 @app.route('/step', methods=['POST'])
@@ -57,11 +62,11 @@ def step():
     if robot_id not in robots_connectes:
         return jsonify({'erreur': 'Robot inconnu'}), 404
     robots_connectes[robot_id]['nombre_pas'] += 1
-    points = BattleLoader.score(couleur, mouvement_bras, expression)
+    points = loader.score(couleur, mouvement_bras, expression)
     robots_connectes[robot_id]['score'] += points
     log(f"{robot_id} | couleur={couleur} bras={mouvement_bras} expression={expression} -> {points:+d} points "
         f"(total: {robots_connectes[robot_id]['score']})")
-    return jsonify(0)  # points — calcul à implémenter dans la branche scoring
+    return jsonify(points)
 
 #retourne le score du robot
 @app.route('/score', methods=['GET'])
@@ -103,10 +108,9 @@ def charger_battle():
         return jsonify({'erreur': 'Paramètre manquant'}), 400
 
     try:
-        BattleLoader.load_path(path)
-        log(f"Fichier .battle chargé : {path} (MVS={BattleLoader.max_steps})")
-        # On retourne le résumé des règles pour que l'UI puisse les afficher
-        return jsonify({'resume': BattleLoader.get_summary(), 'mouvements': BattleLoader.max_steps})
+        loader.load_path(path)
+        log(f"Fichier .battle chargé : {path} (MVS={loader.max_steps})")
+        return jsonify({'resume': loader.summary(), 'mouvements': loader.max_steps})
     except Exception as e:
         return jsonify({'erreur': f'Fichier introuvable : {path}'}), 404
 
