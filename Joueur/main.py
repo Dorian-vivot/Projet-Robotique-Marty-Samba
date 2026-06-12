@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QWidget
 from mainWindow import MainWindow
-from Dance_Loader import DanceStep
+import Dance_Loader
 
 def main():
     app = QApplication(sys.argv)
@@ -10,15 +10,16 @@ def main():
     sys.exit(app.exec())
 
 if __name__ == "__main__":
-    step1 = DanceStep(2, "B")
-    step2 = DanceStep(1, "U")
-    step3 = DanceStep(1, "L")
-
-    print("=== Test DanceStep ===")
-    print(step1)
-    print(step2)
-    print(step3)
-    print(f"step2.nb_pas    = {step2.nb_pas}")
-    print(f"step1.direction = {step1.direction}")
+    print(f"Directions valides : {Dance_Loader.Valid_Directions}")
+    print(f"Bras valides : {Dance_Loader.Valid_Arms}")
+    print(f"Dexpressions valides : {Dance_Loader.Valid_Expressions}")
+    for direction in Dance_Loader.Valid_Directions:
+        step = Dance_Loader.DanceStep(1, direction)
+        print(f"{step}")
+    
+    try:
+        bad = Dance_Loader.DanceStep(1, "zozo")
+    except ValueError as e:
+        print(f"Erreur capturée : {e}")
     sys.exit()
     main()
