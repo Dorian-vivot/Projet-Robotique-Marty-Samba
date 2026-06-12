@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 Valid_Directions = {"U", "D", "L", "R", "B"}
 Valid_Arms = {"ALU", "ARU", "ALB", "ARB"}
 Valid_Expressions = {"XNT", "XSD", "XNG", "XHP", "XDN"}
@@ -21,7 +24,7 @@ class DanceStep:
     def __repr__(self):
         return f"DanceStep({self.nb_pas}{self.direction})"
 
-
+#lie une couleur à ses événements associés
 class Action_By_Color:
 
     def __init__(self, color: str, arms: list[str], expression: str):
@@ -36,3 +39,19 @@ class Action_By_Color:
         return (f"ColorAction(color={self.color!r} "
                 f"arms={self.get_arms_string()!r} "
                 f"exp={self.expression!r})")
+    
+
+class Dance_Loader:
+    def __init__(self):
+        self.steps: list[DanceStep] = []
+        self.action_by_color: dict[str, Action_By_Color]= {}
+        self.loaded: bool = False
+        self.file_path: str = ""
+    
+    def load_path(self, path: str):
+        contenu = Path(path).read_text()
+        self.file_path = path
+        self.loaded = True
+        print(f"[DanceLoader] Chargé : {path} | "
+            f"{len(self.steps)} mouvements | "
+            f"{len(self.action_by_color)} règles ACT")
