@@ -90,8 +90,8 @@ class MartyConnection(QObject):
     def getBatteryLevel(self) -> int | None:
         try:
             return int(self._marty.get_battery_remaining())
-        except Exception:
-            print(f"Erreur pour récupérer le niveau de batterie")
+        except Exception as e:
+            print(f"Erreur pour récupérer le niveau de batterie : {e}")
             return None
         
     def _start_watchdog(self):
@@ -112,3 +112,65 @@ class MartyConnection(QObject):
         self._watchdog = None 
         self._is_connected = False
         self.connection_lost.emit()
+
+    def move(self, direction: str):
+        try:
+            if self._marty is not None and self._is_connected:
+                step_length = 0
+                if direction == "backward":
+                    step_length = -40
+                elif direction == "forward":
+                    step_length = 40
+                self._marty.walk(num_steps=1, start_foot="auto", turn=0, step_length=step_length, move_time=1500)
+        except Exception as e:
+            print(f"Erreur lors de l'éxécution du movement (Direction : {direction}) : {e}")
+
+    def sidestep(self, side: str):
+        try:
+            if self._marty is not None and self._is_connected:
+                self._marty.sidestep(side=side, steps=1, step_length=40, move_time=1500)
+        except Exception as e:
+            print(f"Erreur lors de l'éxécution du pas sur le coté (Coté : {side}) : {e}")
+        
+
+    def turn(self, direction: str):
+        if self._marty is not None and self._is_connected:
+            turn_val = 0
+            if direction == "right":
+                turn_val = 180
+            elif direction == "left":
+                turn_val = -180
+            self._marty.walk(num_steps=1, start_foot="auto", turn=turn_val, step_length=0, move_time=5000)
+
+    def stop(self):
+        if self._marty is not None and self._is_connected:
+            self._marty.stop()
+
+    def moveArm(self, side: str, movement: str):
+        if self._marty is not None and self._is_connected:
+            joint = ""
+            if side == "left":
+                joint = "left arm"
+            elif side == "right":
+                joint = "right arm"
+
+            angle = self._marty.get_joint_position(joint_name_or_num=joint)
+            if movement == "raise":
+                angle += 45
+            elif movement == "back":
+                angle -= 45
+            self._marty.move_joint(joint_name_or_num=joint, position=angle, move_time=500)
+
+    def armsNeutral(self):
+        if self._marty is not None and  self._is_connected:
+            self._marty.move_joint(joint_name_or_num="left arm",  position=0, move_time=500)
+            self._marty.move_joint(joint_name_or_num="right arm", position=0, move_time=500)
+
+    def setEyesPose(self, pose: str):
+        if self._marty is not None and self._is_connected:
+            self._marty.eyes(pose_or_angle=pose, move_time=300)
+
+    def setExpression(self, pose: str, color: tuple):
+        if self._marty is not None and self._is_connected:
+            self._marty.eyes(pose_or_angle=pose, move_time=300)
+            self._marty.disco_color(color, api='led')

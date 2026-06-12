@@ -28,7 +28,6 @@ class WatchDog(QThread):
         while self._is_running:
             if self._connection.getMarty() is not None and self._connection.isConnected():
                 try:
-                    self._connection.getMarty().hello()
                     battery_level = self._connection.getBatteryLevel()
                     if battery_level is not None:
                         self.battery_update.emit(battery_level)
