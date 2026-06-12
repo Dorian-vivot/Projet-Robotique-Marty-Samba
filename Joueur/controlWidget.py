@@ -144,15 +144,118 @@ class ControlWidget(QWidget):
         connexion_hbox.addLayout(bottom_layout)
         connexion_group.setLayout(connexion_hbox)
         state_group.setLayout(state_hbox)
-        
-        other_group = QGroupBox("Autres")
-        other_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+
+        # ------ Groupe - Déplacements ------
+        movement_group = QGroupBox("Déplacements")
+        movement_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        movement_layout = QVBoxLayout()
+
+        # Fléches directionnel
+        movements_layout = QGridLayout()
+        movements_layout.setSpacing(4)
+
+        # Contrôle des bras
+        arms_layout = QHBoxLayout()
+
+        arms_left_group = QGroupBox("Bras gauche")
+        arms_left_layout = QVBoxLayout()
+        self.btn_alu = QPushButton("ALU — Lever")
+        self.btn_alb = QPushButton("ALB — Arrière")
+        self.btn_alu.clicked.connect(lambda: self._onArmClick("left", "raise"))
+        self.btn_alb.clicked.connect(lambda: self._onArmClick("left", "back"))
+        arms_left_layout.addWidget(self.btn_alu)
+        arms_left_layout.addWidget(self.btn_alb)
+        arms_left_group.setLayout(arms_left_layout)
+
+        arms_right_group = QGroupBox("Bras droit")
+        arms_right_layout = QVBoxLayout()
+        self.btn_aru = QPushButton("ARU — Lever")
+        self.btn_arb = QPushButton("ARB — Arrière")
+        self.btn_aru.clicked.connect(lambda: self._onArmClick("right", "raise"))
+        self.btn_arb.clicked.connect(lambda: self._onArmClick("right", "back"))
+        arms_right_layout.addWidget(self.btn_aru)
+        arms_right_layout.addWidget(self.btn_arb)
+        arms_right_group.setLayout(arms_right_layout)
+
+        btn_arms_neutral = QPushButton("Bras en position neutres")
+        btn_arms_neutral.clicked.connect(self._onArmsNeutral)
+
+        arms_layout.addWidget(arms_left_group)
+        arms_layout.addWidget(arms_right_group)
+        movement_layout.addLayout(arms_layout)
+        movement_layout.addWidget(btn_arms_neutral)
+
+        self.btn_forward   = QPushButton("↑")
+        self.btn_forward.clicked.connect(lambda: self._onMoveClick("forward"))
+        self.btn_backward  = QPushButton("↓")
+        self.btn_backward.clicked.connect(lambda: self._onMoveClick("backward"))
+        self.btn_left      = QPushButton("←")
+        self.btn_left.clicked.connect(lambda: self._onSidestepClick("left"))
+        self.btn_right     = QPushButton("→")
+        self.btn_right.clicked.connect(lambda: self._onSidestepClick("right"))
+        self.btn_turn_left  = QPushButton("Tourner à Gauche")
+        self.btn_turn_left.clicked.connect(lambda:  self._onTurnClick("left"))
+        self.btn_turn_right = QPushButton("Tourner à Droite")
+        self.btn_turn_right.clicked.connect(lambda: self._onTurnClick("right"))
+
+        movements_layout.addWidget(self.btn_forward,    0, 1)
+        movements_layout.addWidget(self.btn_left,       1, 0)
+        movements_layout.addWidget(self.btn_right,      1, 2)
+        movements_layout.addWidget(self.btn_backward,   2, 1)
+        movements_layout.addWidget(self.btn_turn_left,  3, 0)
+        movements_layout.addWidget(self.btn_turn_right, 3, 2)
+        movement_layout.addLayout(movements_layout)
+
+        # Bouton stop
+        self.btn_stop = QPushButton("Stop")
+        self.btn_stop.clicked.connect(self._onStopClick)
+        movement_layout.addWidget(self.btn_stop)
+        movement_group.setLayout(movement_layout)
+
+        # ------ Groupe - Expressions ------
+        expression_group = QGroupBox("Expressions")
+        expression_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        expression_layout = QVBoxLayout()
+
+        # Poses des sourcils
+        expression_layout.addWidget(QLabel("Sourcils :"))
+        poses_grid = QGridLayout()
+        poses_grid.setSpacing(4)
+        for i, pose in enumerate(["normal", "angry", "excited", "wide", "wiggle"]):
+            btn = QPushButton(pose)
+            btn.clicked.connect(lambda _, p=pose: self._onEyesPoseClick(p))
+            poses_grid.addWidget(btn, i // 3, i % 3)
+        expression_layout.addLayout(poses_grid)
+
+        # Raccourcis expressions complètes (pose + couleur LED)
+        expression_layout.addWidget(QLabel("Raccourcis :"))
+        shortcuts_grid = QGridLayout()
+        shortcuts_grid.setSpacing(4)
+        shortcuts = [
+            ("XNT — Neutre",  "normal",  (128, 128, 128)),
+            ("XSD — Triste",  "normal",  (0,   0,   255)),
+            ("XNG — Énervé",  "angry",   (255, 0,   0  )),
+            ("XHP — Content", "excited", (0,   255, 0  )),
+        ]
+        for i, (label, pose, color) in enumerate(shortcuts):
+            btn = QPushButton(label)
+            btn.clicked.connect(lambda _, p=pose, c=color: self._onExpressionShortcut(p, c))
+            shortcuts_grid.addWidget(btn, i // 2, i % 2)
+        expression_layout.addLayout(shortcuts_grid)
+
+        expression_group.setLayout(expression_layout)
+
+        # ------ Ajout des groupes au layout principal ------
+        controls_row = QHBoxLayout()
+        controls_row.addWidget(movement_group)
+        controls_row.addWidget(expression_group)
 
         # Ajout des GroupBox
         self.top_layout.addWidget(state_group)
         self.top_layout.addWidget(connexion_group)
         self.main_layout.addLayout(self.top_layout)
-        self.main_layout.addWidget(other_group)
+        self.main_layout.addLayout(controls_row)
+        self.main_layout.addStretch()
 
         self._setStatusWidgets(False)
 
@@ -254,10 +357,27 @@ class ControlWidget(QWidget):
             selected_item = selected_items[0]
             ip_address = selected_item.data(Qt.ItemDataRole.UserRole)
             # TODO : initialiser la connection avec cette adresse IP
-                
 
+    def _onMoveClick(self, direction: str):
+        self._connection.move(direction)
 
+    def _onSidestepClick(self, side: str):
+        self._connection.sidestep(side)
 
+    def _onTurnClick(self, direction: str):
+        self._connection.turn(direction)
 
-        
+    def _onStopClick(self):
+        self._connection.stop()
 
+    def _onArmClick(self, side: str, movement: str):
+        self._connection.moveArm(side, movement)
+
+    def _onArmsNeutral(self):
+        self._connection.armsNeutral()
+
+    def _onEyesPoseClick(self, pose: str):
+        self._connection.setEyesPose(pose)
+
+    def _onExpressionShortcut(self, pose: str, color: tuple):
+        self._connection.setExpression(pose, color)
