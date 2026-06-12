@@ -10,16 +10,21 @@ def main():
     sys.exit(app.exec())
 
 if __name__ == "__main__":
-    print(f"Directions valides : {Dance_Loader.Valid_Directions}")
-    print(f"Bras valides : {Dance_Loader.Valid_Arms}")
-    print(f"Dexpressions valides : {Dance_Loader.Valid_Expressions}")
-    for direction in Dance_Loader.Valid_Directions:
-        step = Dance_Loader.DanceStep(1, direction)
-        print(f"{step}")
-    
-    try:
-        bad = Dance_Loader.DanceStep(1, "zozo")
-    except ValueError as e:
-        print(f"Erreur capturée : {e}")
+
+    action_noir = Dance_Loader.Action_By_Color("N", ["ARU", "ALB"], "XNG")
+    action_bleu = Dance_Loader.Action_By_Color("B", [], "XSD")
+    action_rouge = Dance_Loader.Action_By_Color("R", ["ALU"], "")
+    print(action_noir)
+    print(action_bleu)
+    print(action_rouge)
+
+    print(f"\nBras Noir : {action_noir.get_arms_string()!r}")
+    print(f"Bras Bleu : {action_bleu.get_arms_string()!r}")
+
+    step = Dance_Loader.DanceStep(2, "B")
+    step.arms = action_noir.get_arms_string()
+    step.expression = action_noir.expression
+    print(step)
+
     sys.exit()
     main()
